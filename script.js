@@ -5,7 +5,26 @@ document.addEventListener("DOMContentLoaded", function () {
   const categorySelect = document.getElementById(categorySelectId);
   const typeSelect = document.getElementById(typeSelectId);
 
-  // Map Categories to Types
+  // ----- Single Click Toggle: CATEGORY -----
+  categorySelect.addEventListener("mousedown", function (e) {
+    e.preventDefault();
+    const option = e.target;
+    if (option.tagName === "OPTION") {
+      option.selected = !option.selected;
+      categorySelect.dispatchEvent(new Event("change"));
+    }
+  });
+
+  // ----- Single Click Toggle: SERVICE TYPE -----
+  typeSelect.addEventListener("mousedown", function (e) {
+    e.preventDefault();
+    const option = e.target;
+    if (option.tagName === "OPTION") {
+      option.selected = !option.selected;
+      typeSelect.dispatchEvent(new Event("change"));
+    }
+  });
+
   const serviceOptions = {
     "Bearing Repack": [
       { val: "Tandem Axle", text: "Tandem Axle" },
@@ -44,32 +63,36 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function updateServiceTypes(catSelect, typSelect, optionsMap) {
-    // 1. Get ALL selected options from the Category list
     const selectedOptions = Array.from(catSelect.selectedOptions);
 
-    // 2. Clear the Type list
-    typSelect.innerHTML = "";
+    // Save current type selections
+    const prevSelected = new Set(
+      Array.from(typSelect.selectedOptions).map((opt) => opt.value)
+    );
 
+    typSelect.innerHTML = "";
     let hasValidSelections = false;
 
-    // 3. Loop through selected categories
     if (selectedOptions.length > 0) {
       selectedOptions.forEach((option) => {
         const categoryName = option.value;
 
-        // If this category has mapped types, create a Group for it
         if (optionsMap[categoryName]) {
           hasValidSelections = true;
 
-          // Create <optgroup> (Header for the category)
           const group = document.createElement("optgroup");
           group.label = categoryName;
 
-          // Add the specific types to this group
           optionsMap[categoryName].forEach((opt) => {
             const newOption = document.createElement("option");
             newOption.value = opt.val;
             newOption.text = opt.text;
+
+            // Restore previous selection if still valid
+            if (prevSelected.has(opt.val)) {
+              newOption.selected = true;
+            }
+
             group.appendChild(newOption);
           });
 
@@ -78,18 +101,15 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
 
-    // 4. Manage State (Enable/Disable)
     if (hasValidSelections) {
       typSelect.disabled = false;
     } else {
-      // If user selected "Other" or nothing that has sub-types
       typSelect.disabled = true;
       const defaultOption = document.createElement("option");
-      if (selectedOptions.length === 0) {
-        defaultOption.text = "-- Select Categories First --";
-      } else {
-        defaultOption.text = "No subtypes for selection";
-      }
+      defaultOption.text =
+        selectedOptions.length === 0
+          ? "-- Select Categories First --"
+          : "No subtypes for selection";
       typSelect.appendChild(defaultOption);
     }
   }
